@@ -25,7 +25,7 @@ class NotMatchException(Exception):
 
 class TransactionManager:
     """
-    交易信息管理
+    Transaction information management
     """
 
     def __init__(self, dispatchers: List[Dispatcher], bean_file: str):
@@ -34,22 +34,22 @@ class TransactionManager:
 
     def create(self, tx: Union[Transaction, str]) -> Tuple[Uuid, Union[Transaction, str]]:
         """
-        创建交易
+        Create a transaction
         :param tx:
         :return:
         """
         tx_uuid = Uuid(uuid.uuid4())
         if isinstance(tx, str):
-            # 保存至账本
+            # Save to the account
             with open(self.bean_file, 'a+', encoding='utf-8') as f:
                 f.write(f"; TGBOT_START {tx_uuid}\n{tx}\n; TGBOT_END {tx_uuid}\n")
             return tx_uuid, tx
         elif isinstance(tx, Transaction):
-            # 添加控制元数据
+            # Add control metadata
             tx = copy.deepcopy(tx)
             tx.meta[META_UUID] = tx_uuid
             tx.meta[META_TIME] = str(datetime.datetime.now())
-            # 保存至账本
+            # Save to the account
             with open(self.bean_file, 'a+', encoding='utf-8') as f:
                 printer.print_entry(tx, file=f)
             return tx_uuid, tx
@@ -58,16 +58,16 @@ class TransactionManager:
 
     def remove(self, tx_uuid: Uuid) -> Union[Transaction, str]:
         """
-        删除交易
+        Delete transaction
         :param tx_uuid:
         :return:
         """
         entries, errors, __ = parser.parse_file(self.bean_file)
         if len(errors) > 0:
             desc = '\n'.join(map(lambda err:
-                                 _('行 {lineno}：{message}')
+                                 _('Row {lineno}：{message}')
                                  .format(lineno=err.source["lineno"], message=err.message), errors))
-            raise ValueError(_("账本文件内容错误！\n{desc}").format(desc=desc))
+            raise ValueError(_("Account file content error！\n{desc}").format(desc=desc))
         # 筛选交易
         to_delete = next(
             filter(lambda tx: tx.meta[META_UUID] == tx_uuid if META_UUID in tx.meta else False, entries),
@@ -90,7 +90,7 @@ class TransactionManager:
 
     def _remove_comment_wrapped(self, tx_uuid: Uuid) -> str:
         """
-        使用注释包裹
+        Use a comment package
         :param tx_uuid:
         :return:
         """
@@ -108,7 +108,7 @@ class TransactionManager:
                 max_line = i
                 break
         if min_line == -1 or max_line == -1:
-            raise ValueError(_("交易不存在！"))
+            raise ValueError(_("Transaction does not exist！"))
         # 删除
         with open(self.bean_file, 'w', encoding='utf-8') as f:
             f.write(''.join(lines[:min_line] + lines[max_line + 1:]))
@@ -116,7 +116,7 @@ class TransactionManager:
 
     def create_from_str(self, tx_str) -> Union[Tuple[Uuid, Transaction], Tuple[None, str]]:
         """
-        从交易语法创建交易
+        Create a transaction from a trading syntax
         :param tx_str:
         :return:
         """
@@ -128,16 +128,16 @@ class TransactionManager:
         for dispatcher in self.dispatchers:
             if not dispatcher.quick_check(tx_str):
                 continue
-            # 尝试解析
+            # Try to analyze
             try:
                 tx = dispatcher.process(tx_str)
                 return tx
             except NotMatchException:
-                # 不能通过该解析器解析
+                # Cannot be parsed by this parser
                 continue
         else:
-            # 没有匹配
-            raise ValueError(_("无法识别此交易语法"))
+            # No match
+            raise ValueError(_("Unable to identify this trading syntax"))
 
     @property
     def bean_file(self) -> str:
@@ -157,7 +157,7 @@ class TransactionManager:
 
 def stringfy(tx: Union[Transaction, str]) -> str:
     """
-    交易转为字符串
+    Transaction is converted to a string
     :param tx:
     :return:
     """
@@ -168,19 +168,19 @@ def stringfy(tx: Union[Transaction, str]) -> str:
 
 def get_manager() -> TransactionManager:
     """
-    从配置创建管理对象
+    Create management objects from configuration
     :return:
     """
 
     def create_manager():
-        # 创建分发器
+        # Create a deliverer
         dispatchers = []
         for conf in get_config('transaction.message_dispatcher', []):
             clazz = load_class(conf['class'])
             dispatchers.append(clazz(**conf['args']))
-        # 获得 Bean 文件位置
+        # get Bean File location
         bean_file: str = get_config('transaction.beancount_file')
-        # 创建对象
+        # Create an object
         return TransactionManager(dispatchers, bean_file)
 
     return get_global(GLOBAL_MANAGER, create_manager)

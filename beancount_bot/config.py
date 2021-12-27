@@ -13,7 +13,7 @@ config_file = ''
 
 def set_global(key: str, obj):
     """
-    设置全局对象
+    Set global object
     :param key:
     :param obj:
     :return:
@@ -24,7 +24,7 @@ def set_global(key: str, obj):
 
 def get_global(key: str, default_producer: callable):
     """
-    获取全局对象
+    Get global objects
     :param key:
     :param default_producer:
     :return:
@@ -37,7 +37,7 @@ def get_global(key: str, default_producer: callable):
 
 def load_config(path=None):
     """
-    从文件加载配置，将清空全局对象
+    From the file load configuration, clear the global object
     :param path:
     :return:
     """
@@ -52,19 +52,19 @@ def load_config(path=None):
 
 def get_config_obj():
     """
-    获得配置对象
+    Get the configuration object
     :return:
     """
 
     def _exception():
-        raise ValueError(_("配置未载入！"))
+        raise ValueError(_("Configure unloaded!"))
 
     return get_global(GLOBAL_CONFIG, _exception)
 
 
 def get_config(key_path: str, default_value=None):
     """
-    获得配置
+    Get a configuration
     :param key_path:
     :param default_value:
     :return:

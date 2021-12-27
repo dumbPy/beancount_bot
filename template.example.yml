@@ -1,45 +1,43 @@
-# 模板配置
+# Template configuration
 
-# 模板命令的格式：指令名 必填参数 [可选参数] < 目标账户
-#   例如：饭 20 < zfb
-#   1. 指令名可以有多个，都可以触发同一个模板；
-#   2. 目标账户可以省略。省略将使用默认账户
-#   3. 参数使用空格隔开，可以用引号（"）包裹带空格参数
+# Format template command: command name required parameters [optional parameters] <destination account
+#    For example: Rice 20 <zfb
+#    1. There can be multiple command names, all of which can trigger the same template;
+#    2. The target account can be omitted. Omit will use the default account
+#    3. Use spaces to separate the parameters, you can use quotation marks (") to wrap the parameters with spaces
 
 config:
-  # 目标账户
+  # Target account
   accounts:
     zfb: 'Assets:Digital:Alipay'
     wx: 'Assets:Digital:Wechat'
-  # 默认账户
+  # Default Account
   default_account:
     'Assets:Digital:Alipay'
 
 templates:
-  # 模板定义
-  # command：设置指令名。可以是一个值或者数组
-  # args：模板参数。使用时必填，可以在模板定义时用 {参数} 引用
-  # optional_args：可选参数。可以没有，使用时跟在模板参数后面，默认为空字符串
-  # computed：需要计算的参数。之后可以跟 Python 表达式语句，语句中可以使用传入的参数和内建变量
-  # template：定义最终生成的交易语句。可以用 {变量} 引用：
-  #   1. 内建变量：account（账户）、date（日期）、command（用户输入的指令，在多指令时可能不同）
-  #   2. 各种参数：参数、可选参数、计算参数都可以引用
+  # Template definition
+  # command: Set the command name. Can be a value or an array
+  # args: template parameters. Required when using it, you can use {parameter} to quote when defining the template
+  # optional_args: optional parameters. No, it will follow the template parameter when used, the default is an empty string
+  # computed: The parameters that need to be calculated. It can be followed by a Python expression statement, and the passed-in parameters and built-in variables can be used in the statement
+  # template: Define the final generated transaction statement. You can use {variable} to reference:
+  #    1. Built-in variables: account (account), date (date), command (command entered by the user, which may be different for multiple commands)
+  #    2. Various parameters: parameters, optional parameters, and calculation parameters can all be quoted
 
   - command: 'vultr'
     template: |
-      {date} * "Vultr" "月费"
+      {date} * "Vultr" "Monthly fee"
         {account}
         Expenses:Tech:Cloud    5 USD
-
-  - command: [ '饮料', '饮', '咖啡' ]
+  - command : [ 'drink', 'drink', 'coffee']
     args:
       - 'price'
     template: |
       {date} * "" "{command}"
         {account}
         Expenses:Food:Drink    {price} CNY
-
-  - command: '饭'
+  - command : 'rice'
     args:
       - 'price'
     optional_args:
@@ -52,6 +50,6 @@ templates:
         'Expenses:Food:Dinner:Lunch' if hour <= 16 else \
         'Expenses:Food:Dinner:Supper'
     template: |
-      {date} * "{restaurant}" "饭"
+      {date} * "{restaurant}" "meal"
         {account}
         {expense}  {price} CNY

@@ -8,32 +8,32 @@ from beancount_bot.i18n import _
 
 class Dispatcher:
     """
-    交易语句处理器
+    Trading statement processor
     """
 
     def __init__(self) -> None:
         """
-        处理器的构造函数将在构建 TransactionManager 时执行。如启动时、/reload 后第一条语句解析前
-        构造函数参数通过 **kwargs 形式传入
+        The constructor of the processor will be built TransactionManager Performation.If started、/reload After the first statement analysis
+        Constructor parameters pass **kwargs Incoming form
         """
         super().__init__()
 
     def quick_check(self, input_str: str) -> bool:
         """
-        快速检查输入是否符合
-        此方法不必进行精准判断，但是不建议进行耗时操作
-        :param input_str: 用户输入
-        :return: 用户输入是否可被处理器处理
+        Quickly check if the input is compliant
+        This method does not have to be accurately judged, but it does not recommend time consuming operation.
+        :param input_str: User input
+        :return: The user input can be processed by the processor
         """
         return True
 
     def process(self, input_str: str) -> Union[Transaction, str]:
         """
-        解析输入为交易。若输入不合规，则抛出 ValueError
-        一般情况下，不需要重载此方法
-        :param input_str: 用户输入
-        :return: 如果解析为交易，返回 Transaction；否则返回符合 beancount 语法的字符串
-        :raise NotMatchException: 用户输入不可被处理器处理
+        Analysis input is transaction.If the input is not compliant, throw ValueError
+        In general, it is not necessary to overload this method.
+        :param input_str: User input
+        :return: If resolved as a transaction，返回 Transaction；Otherwise it returns beancount Syntax string
+        :raise NotMatchException: User input cannot be processed
         """
         tx_str = self._process_raw(input_str)
         try:
@@ -47,8 +47,8 @@ class Dispatcher:
 
     def _process_raw(self, input_str: str) -> str:
         """
-        解析输入为 beancount 语法
-        正常处理器都应该重载此方法
+        Analysis input is beancount syntax
+        Normal processor should be overloaded
         :param input_str:
         :return:
         """
@@ -60,14 +60,14 @@ class Dispatcher:
 
     def get_name(self) -> str:
         """
-        获得处理器名称。用于在 /help 中显示选项
-        :return: 处理器名称
+        Get the processor name.In /help Display options
+        :return: Processor name
         """
-        return _("未知")
+        return _("unknown")
 
     def get_usage(self) -> str:
         """
-        获得帮助信息。用于在 /help 中显示具体帮助内容，应当详细
+        Get help information.Used to display specific help content in /help, should be detailed
         :return:
         """
-        return _("暂无帮助信息。")
+        return _("No help information.")

@@ -13,7 +13,7 @@ _session_cache: Dict[str, dict] = {}
 
 def load_session():
     """
-    从文件恢复会话数据
+    Restore session data from file
     :return:
     """
     global _session_cache
@@ -21,12 +21,12 @@ def load_session():
     if os.path.exists(session_file):
         with open(session_file, 'r', encoding='utf-8') as f:
             _session_cache = json.load(f)
-        logger.debug("从文件恢复会话 %s", _session_cache)
+        logger.debug("Restore session from file %s", _session_cache)
 
 
 def get_session_for(uid: int) -> MappingProxyType:
     """
-    返回用户会话的不可变视图
+    Returns the non-variable view of the user session
     :param uid:
     :return:
     """
@@ -38,7 +38,7 @@ def get_session_for(uid: int) -> MappingProxyType:
 
 def get_session(uid: int, key: str, default_value=None) -> object:
     """
-    返回用户会话的某一值
+    Returns a value for the user session
     :param uid:
     :param key:
     :param default_value:
@@ -54,7 +54,7 @@ def get_session(uid: int, key: str, default_value=None) -> object:
 
 def set_session(uid: int, key: str, value: object):
     """
-    设置用户会话值
+    Set user session value
     :param uid:
     :param key:
     :param value:
@@ -72,7 +72,7 @@ def set_session(uid: int, key: str, value: object):
 
 def all_user(auth=True) -> Iterable[int]:
     """
-    获得所有用户
+    Get all users
     :param auth:
     :return:
     """

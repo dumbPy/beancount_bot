@@ -1,3 +1,4 @@
+import traceback
 import telebot
 from telebot import apihelper
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, MessageEntity, Message, CallbackQuery
@@ -19,7 +20,7 @@ bot = telebot.TeleBot(token=None, parse_mode=None)
 @bot.middleware_handler(update_types=['message'])
 def session_middleware(bot_instance, message):
     """
-    会话中间件
+    Session middleware
     :param bot_instance:
     :param message:
     :return:
@@ -28,12 +29,12 @@ def session_middleware(bot_instance, message):
 
 
 #######
-# 鉴权 #
+# Authentication #
 #######
 
 def check_auth() -> bool:
     """
-    检查是否登录
+    Check if you log in
     :return:
     """
     return SESS_AUTH in bot.session and bot.session[SESS_AUTH]
@@ -42,83 +43,83 @@ def check_auth() -> bool:
 @bot.message_handler(commands=['start'])
 def start_handler(message: Message):
     """
-    首次聊天时鉴权
+    First chat time authentication
     :param message:
     :return:
     """
     auth = get_session(message.from_user.id, SESS_AUTH, False)
     if auth:
-        bot.reply_to(message, _("已经鉴权过了！"))
+        bot.reply_to(message, _("Have been authenticated！"))
         return
     # 要求鉴权
-    bot.reply_to(message, _("欢迎使用记账机器人！请输入鉴权令牌："))
+    bot.reply_to(message, _("Welcome to the accounting robot!Please enter the authentication token:"))
 
 
 def auth_token_handler(message: Message):
     """
-    登陆令牌回调
+    Login token callback
     :param message:
     :return:
     """
     if check_auth():
         return
-    # 未鉴权则视为鉴权令牌
+    # Unconfirmation is considered an authentication token
     auth_token = get_config('bot.auth_token')
     if auth_token == message.text:
         set_session(message.from_user.id, SESS_AUTH, True)
-        bot.reply_to(message, _("鉴权成功！"))
+        bot.reply_to(message, _("Authentic success！"))
     else:
-        bot.reply_to(message, _("鉴权令牌错误！"))
+        bot.reply_to(message, _("Authentication token error！"))
 
 
 #######
-# 指令 #
+# instruction #
 #######
 
 
 @bot.message_handler(commands=['reload'])
 def reload_handler(message):
     """
-    重载配置指令
+    Overload configuration instruction
     :param message:
     :return:
     """
     if not check_auth():
-        bot.reply_to(message, _("请先进行鉴权！"))
+        bot.reply_to(message, _("Please conduct authentication first！"))
         return
     load_config()
     load_task()
-    bot.reply_to(message, _("成功重载配置！"))
+    bot.reply_to(message, _("Successful overload configuration！"))
 
 
 @bot.message_handler(commands=['help'])
 def help_handler(message):
     """
-    帮助指令
+    Help instruction
     :param message:
     :return:
     """
     cmd = message.text
     dispatchers = get_manager().dispatchers
     if cmd == '/help':
-        # 创建消息按键
+        # Create a message button
         markup = InlineKeyboardMarkup()
         for ind, d in zip(range(len(dispatchers)), dispatchers):
-            help_btn = _("帮助：{name}").format(name=d.get_name())
+            help_btn = _("help：{name}").format(name=d.get_name())
             markup.add(InlineKeyboardButton(help_btn, callback_data=f'help:{ind}'))
         # 帮助信息
         command_usage = [
-            _("/start - 鉴权"),
-            _("/help - 使用帮助"),
-            _("/reload - 重新加载配置文件"),
-            _("/task - 查看、运行任务"),
+            _("/start - Authentication"),
+            _("/help - Using help"),
+            _("/reload - Reload the configuration file"),
+            _("/task - View, run the task"),
         ]
         help_text = \
-            _("记账 Bot\n\n可用指令列表：\n{command}\n\n交易语句语法帮助请选择对应模块，或使用 /help [模块名] 查看。").format(
+            _("Account bill Bot\n\nAvailable instruction list：\n{command}\n\nTrade statement syntax help, select the corresponding module，Use /help [Module name] Check.").format(
                 command='\n'.join(command_usage))
         bot.reply_to(message, help_text, reply_markup=markup)
     else:
-        # 显示详细帮助
+        # Display detailed help
         name: str = cmd[6:]
         flag_found = False
         for d in dispatchers:
@@ -126,24 +127,24 @@ def help_handler(message):
                 show_usage_for(message, d)
                 flag_found = True
         if not flag_found:
-            bot.reply_to(message, _("对应名称的交易语句处理器不存在！"))
+            bot.reply_to(message, _("The corresponding name of the transaction statement processor does not exist！"))
 
 
 def show_usage_for(message: Message, d: Dispatcher):
     """
-    显示特定处理器的使用方法
+    Show the method of use of a specific processor
     :param message:
     :param d:
     :return:
     """
-    usage = _("帮助：{name}\n\n{usage}").format(name=d.get_name(), usage=d.get_usage())
+    usage = _("help：{name}\n\n{usage}").format(name=d.get_name(), usage=d.get_usage())
     bot.reply_to(message, usage)
 
 
 @bot.callback_query_handler(func=lambda call: call.data[:4] == 'help')
 def callback_help(call: CallbackQuery):
     """
-    帮助语句详细帮助的回调
+    Help statement detailed help
     :param call:
     :return:
     """
@@ -152,113 +153,114 @@ def callback_help(call: CallbackQuery):
         dispatchers = get_manager().dispatchers
         show_usage_for(call.message, dispatchers[d_id])
     except Exception as e:
-        logger.error(f'{call.id}：发生未知错误！', e)
-        bot.answer_callback_query(call.id, _("发生未知错误！"))
+        logger.error(f'{call.id}：Unknown error！', e)
+        logger.error(traceback.format_exc())
+        bot.answer_callback_query(call.id, _("Unknown error！\n"+traceback.format_exc()))
 
 
 @bot.message_handler(commands=['task'])
 def task_handler(message):
     """
-    任务指令
+    Task instruction
     :param message:
     :return:
     """
     if not check_auth():
-        bot.reply_to(message, _("请先进行鉴权！"))
+        bot.reply_to(message, _("Please conduct authentication first!"))
         return
 
     cmd = message.text
     tasks = get_task()
     if cmd == '/task':
-        # 显示所有任务
+        # Show all tasks
         all_tasks = ', '.join(tasks.keys())
         bot.reply_to(message,
-                     _("当前注册任务：{all_tasks}\n"
-                       "可以通过 /task [任务名] 主动触发").format(all_tasks=all_tasks))
+                     _("Current registration task：{all_tasks}\n"
+                       "able to pass /task [Task Name] Active trigger").format(all_tasks=all_tasks))
     else:
-        # 运行任务
+        # Run task
         dest = cmd[6:]
         if dest not in tasks:
-            bot.reply_to(message, _("任务不存在！"))
+            bot.reply_to(message, _("Task does not exist！"))
             return
         task = tasks[dest]
         task.trigger(bot)
 
 
 #######
-# 交易 #
+# trade #
 #######
 
 
 @bot.message_handler(func=lambda m: True)
 def transaction_query_handler(message: Message):
     """
-    交易语句处理
+    Trading statement processing
     :param message:
     :return:
     """
     if not check_auth():
         auth_token_handler(message)
         return
-    # 已鉴权则处理交易
+    # Treated
     manager = get_manager()
     try:
         tx_uuid, tx = manager.create_from_str(message.text)
-        # 创建消息按键
+        # Create a message button
         markup = InlineKeyboardMarkup()
-        markup.add(InlineKeyboardButton(_("撤回交易"), callback_data=f'withdraw:{tx_uuid}'))
+        markup.add(InlineKeyboardButton(_("Revoke trading"), callback_data=f'withdraw:{tx_uuid}'))
         # 回复
         bot.reply_to(message, transaction.stringfy(tx), reply_markup=markup)
     except ValueError as e:
-        logger.info(f'{message.from_user.id}：无法添加交易', e)
+        logger.info(f'{message.from_user.id}：Unable to add transactions', e)
         bot.reply_to(message, e.args[0])
     except Exception as e:
-        logger.error(f'{message.from_user.id}：发生未知错误！添加交易失败。', e)
-        bot.reply_to(message, _("发生未知错误！添加交易失败。"))
+        logger.error(f'{message.from_user.id}：An unknown mistake!Adding a transaction failed.', e)
+        bot.reply_to(message, _("An unknown mistake!Adding a transaction failed.\n"+traceback.format_exc()))
 
 
 @bot.callback_query_handler(func=lambda call: call.data[:8] == 'withdraw')
 def callback_withdraw(call: CallbackQuery):
     """
-    交易撤回回调
+    Transaction withdrawal callback
     :param call:
     :return:
     """
     auth = get_session(call.from_user.id, SESS_AUTH, False)
     if not auth:
-        bot.answer_callback_query(call.id, _("请先进行鉴权！"))
+        bot.answer_callback_query(call.id, _("Please conduct authentication first！"))
         return
     tx_uuid = call.data[9:]
     manager = get_manager()
     try:
         manager.remove(tx_uuid)
-        # 修改原消息回复
-        message = _("交易已撤回")
+        # Modify the original message reply
+        message = _("Transaction has been withdrawn")
         code_format = MessageEntity('code', 0, len(message))
         bot.edit_message_text(message,
                               chat_id=call.message.chat.id,
                               message_id=call.message.message_id,
                               entities=[code_format])
     except ValueError as e:
-        logger.info(f'{call.id}：无法创建交易', e)
+        logger.info(f'{call.id}：Unable to create trading', e)
         bot.answer_callback_query(call.id, e.args[0])
     except Exception as e:
-        logger.error(f'{call.id}：发生未知错误！撤回交易失败。', e)
-        bot.answer_callback_query(call.id, _("发生未知错误！撤回交易失败。"))
+        logger.error(f'{call.id}：An unknown mistake!Withdrawal of the transaction failed.', e)
+        bot.answer_callback_query(call.id, _("An unknown mistake!Withdrawal of the transaction failed."))
 
 
 def serving():
     """
-    启动 Bot
+    start up Bot
     :return:
     """
 
-    # 设置 Token
+    # set up Token
     token = get_config('bot.token')
     bot.token = token
-    # 设置代理
+    # Set a proxy
     proxy = get_config('bot.proxy')
     if proxy is not None:
         apihelper.proxy = {'https': proxy}
-    # 启动
+    # start up
     bot.infinity_polling()

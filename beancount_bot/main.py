@@ -10,32 +10,32 @@ from beancount_bot.util import logger
 
 
 @click.command()
-@click.version_option(__VERSION__, '-V', '--version', help=_("显示版本信息"))
-@click.help_option(help=_("显示帮助信息"))
-@click.option('-c', '--config', default='beancount_bot.yml', help=_("配置文件路径"))
+@click.version_option(__VERSION__, '-V', '--version', help=_("Display version information"))
+@click.help_option(help=_("Display help information"))
+@click.option('-c', '--config', default='beancount_bot.yml', help=_("Profile path"))
 def main(config):
     """
-    适用于 Beancount 的 Telegram 机器人
+    Telegram robot for Beancount
     """
     logger.setLevel('INFO')
-    # 加载配置
-    logger.info("加载配置：%s", config)
+    # Load configuration
+    logger.info("Load configuration：%s", config)
     conf.config_file = config
     load_config()
-    # 设置日志等级
+    # Set log level
     logger.setLevel(get_config('log.level', 'INFO'))
-    # 加载会话
-    logger.info("加载会话...")
+    # Load session
+    logger.info("Load session...")
     load_session()
-    # 创建管理对象
-    logger.info("创建管理对象...")
+    # Create a management object
+    logger.info("Create a management object...")
     get_manager()
-    # 加载定时任务
-    logger.info("加载定时任务...")
+    # Load timing task
+    logger.info("Load timing task...")
     load_task()
     start_schedule_thread()
-    # 启动
-    logger.info("启动 Bot...")
+    # start up
+    logger.info("start up Bot...")
     bot.serving()
 
 
